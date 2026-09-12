@@ -196,24 +196,38 @@ def generate_sql(rows):
     return chr(10).join(sqls)
 
 if __name__ == '__main__':
+    default_input = os.path.join('data', 'IS_fire_building_safety_metadata_extracted.txt')
+    default_output = os.path.join('db', 'sql', 'seed_data.sql')
+
     parser = argparse.ArgumentParser(description='Generate seed SQL from Indian Standards metadata TXT file')
-    parser.add_argument('--input', '-i', default='IS_fire_building_safety_metadata_extracted.txt', help='Path to metadata TXT file')
-    parser.add_argument('--output', '-o', default='seed_data.sql', help='Path to output SQL file')
+    parser.add_argument('--input', '-i', default=default_input, help='Path to metadata TXT file')
+    parser.add_argument('--output', '-o', default=default_output, help='Path to output SQL file')
     args = parser.parse_args()
 
     input_path = args.input
     if not os.path.exists(input_path):
-        # Fallback to local user downloads path if available
-        fallback = os.path.expanduser(os.path.join('~', 'Downloads', 'IS_fire_building_safety_metadata_extracted.txt'))
-        if os.path.exists(fallback):
-            input_path = fallback
+        # Fallback to root or user downloads path if available
+        candidates = [
+            'IS_fire_building_safety_metadata_extracted.txt',
+            os.path.join('..', 'data', 'IS_fire_building_safety_metadata_extracted.txt'),
+            os.path.expanduser(os.path.join('~', 'Downloads', 'IS_fire_building_safety_metadata_extracted.txt')),
+        ]
+        for cand in candidates:
+            if os.path.exists(cand):
+                input_path = cand
+                break
         else:
-            raise FileNotFoundError(f'Metadata TXT file not found at {input_path} or {fallback}')
+            raise FileNotFoundError(f'Metadata TXT file not found at {input_path} or candidate locations')
 
     print(f'Parsing metadata file: {input_path}')
     rows = parse_txt_file(input_path)
     print('Parsed rows:', len(rows))
     sql_out = generate_sql(rows)
+
+    out_dir = os.path.dirname(args.output)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+
     with open(args.output, 'w', encoding='utf-8') as f:
         f.write(sql_out)
     print(f'{args.output} re-generated successfully with {len(sql_out.splitlines())} lines.')

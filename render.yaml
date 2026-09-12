@@ -1,0 +1,49 @@
+﻿# render.yaml - Render Blueprint for Spec2IS backend
+# https://render.com/docs/blueprint-spec
+#
+# Database: Supabase (external) - no Render DB needed.
+# Set DATABASE_URL in the Render dashboard to your Supabase connection string.
+#
+# IMPORTANT: use the Supabase *Session Pooler* URL (port 5432, NOT 6543)
+# because asyncpg does NOT support PgBouncer transaction-mode pooling.
+# Format: postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres
+
+services:
+  - type: web
+    name: spec2is-backend
+    runtime: python
+    plan: free                       # upgrade to starter for always-on
+    region: singapore                # closest to India
+
+    buildCommand: pip install -r requirements.txt
+
+    # Production server - no --reload, 1 worker fits Render free tier RAM (512MB)
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1
+
+    healthCheckPath: /health
+
+    envVars:
+      # --- Secrets: set these in Render dashboard, NOT here ---
+      - key: DATABASE_URL
+        sync: false          # Supabase Session Pooler URL (postgresql://...)
+      - key: GEMINI_API_KEY
+        sync: false
+
+      # --- Non-secret config (safe to commit) ---
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-3.6-flash
+      - key: EMBEDDING_MODEL
+        value: sentence-transformers/all-MiniLM-L6-v2
+      - key: CONFIDENCE_THRESHOLD
+        value: "0.45"
+      - key: VECTOR_WEIGHT
+        value: "0.7"
+      - key: KEYWORD_WEIGHT
+        value: "0.3"
+      - key: MAX_CANDIDATES
+        value: "20"
+      # Optional - only needed if LLM_PROVIDER=anthropic
+      # - key: ANTHROPIC_API_KEY
+      #   sync: false

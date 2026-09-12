@@ -1,4 +1,4 @@
-﻿# Environment variables and secrets
+# Environment variables and secrets
 .env
 .env.*
 *.env
@@ -28,6 +28,11 @@ wheels/
 *.egg
 venv/
 ENV/
+.venv/
+
+# Raw data files (large, not needed in repo)
+data/*.txt
+data/*.csv
 
 # Database dumps / temp logs
 *.log
