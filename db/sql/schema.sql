@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS standard_embeddings (
     id BIGSERIAL PRIMARY KEY,
     standard_id BIGINT NOT NULL REFERENCES standards(id) ON DELETE CASCADE,
     standard_version_id BIGINT REFERENCES standard_versions(id) ON DELETE SET NULL,
-    embedding vector(1536), -- Configurable embedding dimension
+    embedding vector(384), -- Matches sentence-transformers/all-MiniLM-L6-v2 output dimension
     embedding_model VARCHAR(100),
     text_content TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP

@@ -10,8 +10,9 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 load_dotenv()
@@ -56,8 +57,17 @@ async def root() -> dict:
 
 
 @app.get("/health")
-async def health() -> dict:
-    return {"status": "ok"}
+async def health(db: AsyncSession = Depends(get_db)) -> dict:
+    """Liveness + DB connectivity check."""
+    try:
+        await db.execute(text("SELECT 1"))
+    except Exception as exc:
+        logger.exception("Health check: DB unreachable")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Database unreachable: {exc}",
+        )
+    return {"status": "ok", "db": "connected"}
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)
