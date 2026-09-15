@@ -1,0 +1,115 @@
+# BIS Crawler DB to Spec2IS Normalized DB Mapping Contract
+# This document defines exactly how raw crawler fields are mapped into the Spec2IS relational schema.
+
+mappings:
+  - source_table: departments
+    source_column: name
+    source_type: string
+    target_table: standard_domains
+    target_column: name
+    target_type: string
+    strategy: TRANSFORM
+    required: true
+    transformation_rules: "Trim whitespace. Uppercase."
+    identity_role: "Natural Key"
+    fallback_behavior: "Fail if missing"
+    notes: "Departments are inserted/upserted as domains."
+
+  - source_table: standards
+    source_column: is_number
+    source_type: string
+    target_table: standards
+    target_column: standard_number
+    target_type: string
+    strategy: TRANSFORM
+    required: true
+    transformation_rules: "Regex extraction of core identity (e.g. 'IS 456' from 'IS 456 : 2000')"
+    identity_role: "Enduring Standard Identity (Primary Natural Key)"
+    fallback_behavior: "Fail if missing"
+    notes: "Multiple crawler records with different years will map to the SAME Standard row."
+
+  - source_table: standards
+    source_column: title
+    source_type: string
+    target_table: standards
+    target_column: title
+    target_type: string
+    strategy: MERGE
+    required: true
+    transformation_rules: "Preserve latest title."
+    identity_role: "Metadata"
+    fallback_behavior: "Use 'Unknown Title'"
+
+  - source_table: standards
+    source_column: bis_standard_id
+    source_type: integer
+    target_table: standard_versions
+    target_column: bis_standard_id
+    target_type: bigint
+    strategy: DIRECT
+    required: true
+    transformation_rules: "None"
+    identity_role: "Primary External Identity (Upsert Key)"
+    fallback_behavior: "Fallback to (standard_id, year)"
+
+  - source_table: standards
+    source_column: year
+    source_type: integer
+    target_table: standard_versions
+    target_column: year
+    target_type: integer
+    strategy: TRANSFORM
+    required: true
+    transformation_rules: "Extract from is_number if missing."
+    identity_role: "Secondary Natural Key (with standard_id)"
+    fallback_behavior: "0"
+
+  - source_table: standards
+    source_column: status
+    source_type: string
+    target_table: standard_versions
+    target_column: status
+    target_type: string
+    strategy: DIRECT
+    required: false
+    transformation_rules: "None"
+    identity_role: "Metadata"
+    fallback_behavior: "NULL"
+
+  - source_table: standard_details
+    source_column: "*"
+    source_type: json/various
+    target_table: standard_versions
+    target_column: extra_metadata
+    target_type: JSONB
+    strategy: JSONB
+    required: false
+    transformation_rules: "Pack all remaining fields (certification_status, mandatory_status, etc.) natively."
+    identity_role: "None"
+    fallback_behavior: "{}"
+    notes: "Prevents schema bloat while preserving 100% of BIS metadata."
+
+  - source_table: standard_relationships
+    source_column: relationship_type
+    source_type: string
+    target_table: standard_relationships
+    target_column: relationship_type
+    target_type: string
+    strategy: TRANSFORM
+    required: true
+    transformation_rules: "Normalize to allowed enum (REVISES, SUPERSEDES, RELATED_TO)"
+    identity_role: "Relationship Identity"
+    fallback_behavior: "RELATED_TO"
+
+  - source_table: standard_relationships
+    source_column: target_standard_is_number
+    source_type: string
+    target_table: standard_relationships
+    target_column: target_standard_number_raw
+    target_type: string
+    strategy: LOOKUP
+    required: true
+    transformation_rules: "Lookup standard_id using target_standard_is_number. If missing, leave target_standard_id NULL but store the raw string."
+    identity_role: "Foreign Key Linkage"
+    fallback_behavior: "UNRESOLVED"
+    notes: "Unresolved relationships are tracked and counted."

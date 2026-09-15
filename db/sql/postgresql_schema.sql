@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS standard_versions (
     effective_date DATE,
     verification_status VARCHAR(100),
     notes TEXT,
+    bis_standard_id BIGINT UNIQUE,
+    extra_metadata JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_standard_versions_std_year UNIQUE (standard_id, year)
@@ -57,6 +59,7 @@ CREATE TABLE IF NOT EXISTS standard_versions (
 CREATE INDEX IF NOT EXISTS idx_standard_versions_standard ON standard_versions(standard_id);
 CREATE INDEX IF NOT EXISTS idx_standard_versions_year ON standard_versions(year);
 CREATE INDEX IF NOT EXISTS idx_standard_versions_status ON standard_versions(status);
+CREATE INDEX IF NOT EXISTS idx_standard_versions_bis_id ON standard_versions(bis_standard_id);
 
 -- 5. Standard Parts Table (Parts of a standard)
 CREATE TABLE IF NOT EXISTS standard_parts (
@@ -150,7 +153,7 @@ CREATE TABLE IF NOT EXISTS standard_embeddings (
     id BIGSERIAL PRIMARY KEY,
     standard_id BIGINT NOT NULL REFERENCES standards(id) ON DELETE CASCADE,
     standard_version_id BIGINT REFERENCES standard_versions(id) ON DELETE SET NULL,
-    embedding vector(1536), -- Configurable embedding dimension
+    embedding vector(384), -- Configurable embedding dimension
     embedding_model VARCHAR(100),
     text_content TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP

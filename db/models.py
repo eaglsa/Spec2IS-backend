@@ -9,9 +9,16 @@ from __future__ import annotations
 import datetime
 from typing import List, Optional
 
+import os
+from dotenv import load_dotenv
+load_dotenv()
+_db_url = os.environ.get("DATABASE_URL", "")
+
 from pgvector.sqlalchemy import Vector
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import BigInteger
+
 from sqlalchemy import (
-    BigInteger,
     Column,
     Date,
     DateTime,
@@ -99,6 +106,11 @@ class StandardVersion(Base):
     effective_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
     verification_status: Mapped[Optional[str]] = mapped_column(String(100))
     notes: Mapped[Optional[str]] = mapped_column(Text)
+    
+    bis_standard_id: Mapped[Optional[int]] = mapped_column(
+        BigInteger, unique=True, index=True
+    )
+    extra_metadata: Mapped[Optional[dict]] = mapped_column(JSONB)
 
     standard: Mapped["Standard"] = relationship("Standard", back_populates="versions")
     parts: Mapped[List["StandardPart"]] = relationship(

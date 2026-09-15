@@ -1,10 +1,10 @@
-﻿"""
+"""
 scripts/init_db.py
 ------------------
 One-shot database initialisation for fresh deployments (e.g. Render).
 
 Steps:
-  1. Apply schema.sql   — creates all tables + pgvector extension
+  1. Apply postgresql_schema.sql   — creates all tables + pgvector extension
   2. Apply seed_data.sql — inserts all IS standards metadata
   3. Generate embeddings — populates standard_embeddings via sentence-transformers
 
@@ -51,7 +51,7 @@ async def run(skip_schema: bool, skip_seed: bool, skip_embed: bool) -> None:
     from db.session import AsyncSessionLocal, engine
 
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    schema_path = os.path.join(base_dir, "db", "sql", "schema.sql")
+    schema_path = os.path.join(base_dir, "db", "sql", "postgresql_schema.sql")
     seed_path   = os.path.join(base_dir, "db", "sql", "seed_data.sql")
 
     async with AsyncSessionLocal() as db:
@@ -80,7 +80,7 @@ async def run(skip_schema: bool, skip_seed: bool, skip_embed: bool) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Initialise Spec2IS database")
-    parser.add_argument("--skip-schema", action="store_true", help="Skip schema.sql")
+    parser.add_argument("--skip-schema", action="store_true", help="Skip postgresql_schema.sql")
     parser.add_argument("--skip-seed",   action="store_true", help="Skip seed_data.sql")
     parser.add_argument("--skip-embed",  action="store_true", help="Skip embedding generation")
     args = parser.parse_args()
