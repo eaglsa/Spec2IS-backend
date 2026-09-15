@@ -13,7 +13,7 @@ Spec2IS-backend/
 │   ├── models.py                  # SQLAlchemy ORM models (Tier 1-3 normalized schema)
 │   ├── session.py                 # Async engine & FastAPI session dependency
 │   └── sql/
-│       ├── schema.sql             # PostgreSQL + pgvector schema definition
+│       ├── postgresql_schema.sql             # PostgreSQL + pgvector schema definition
 │       ├── seed_data.sql          # Seed data generated from metadata extraction
 │       └── validation_queries.sql # DB verification & audit SQL queries
 ├── pipeline/
@@ -56,7 +56,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 2. Initialize the schema:
 ```bash
-psql -U postgres -d spec2is -f db/sql/schema.sql
+psql -U postgres -d spec2is -f db/sql/postgresql_schema.sql
 ```
 
 3. Load seed metadata:
